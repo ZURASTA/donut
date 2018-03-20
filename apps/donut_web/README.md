@@ -1,4 +1,4 @@
-# DonutWeb
+# Donut.Web
 
 To start your Phoenix server:
 
