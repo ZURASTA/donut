@@ -1,18 +1,6 @@
 defmodule Donut.GraphQL do
-  @moduledoc """
-  Documentation for Donut.GraphQL.
-  """
+    use Absinthe.Schema
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Donut.GraphQL.hello
-      :world
-
-  """
-  def hello do
-    :world
-  end
+    query do
+    end
 end
