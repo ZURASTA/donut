@@ -13,7 +13,6 @@ config :donut_web,
 config :donut_web, Donut.Web.Endpoint,
     url: [host: "localhost"],
     secret_key_base: "Y0tBCJ5RLXGv4336LnxMk0pZu75pa0ZYyp7bAHbwtPQCPRVcxak8VSbxi6ceBVOS",
-    render_errors: [view: Donut.Web.ErrorView, accepts: ~w(json)],
     pubsub: [
         name: Donut.Web.PubSub,
         adapter: Phoenix.PubSub.PG2

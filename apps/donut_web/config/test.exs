@@ -5,3 +5,5 @@ use Mix.Config
 config :donut_web, Donut.Web.Endpoint,
     http: [port: 4001],
     server: false
+
+config :logger, level: :warn
