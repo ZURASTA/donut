@@ -23,7 +23,7 @@ defmodule Donut.Web.Mixfile do
     # Type `mix help compile.app` for more information.
     def application do
         [
-            mod: { Donut.Web.Application, [] },
+            mod: { Donut.Web, [] },
             extra_applications: [:logger, :runtime_tools]
         ]
     end
