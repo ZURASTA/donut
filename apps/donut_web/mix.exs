@@ -42,7 +42,8 @@ defmodule Donut.Web.Mixfile do
             { :gettext, "~> 0.11" },
             { :cowboy, "~> 1.0" },
             { :absinthe, "~> 1.4" },
-            { :absinthe_plug, "~> 1.4" }
+            { :absinthe_plug, "~> 1.4" },
+            { :corsica, "~> 1.1" }
         ]
     end
 
