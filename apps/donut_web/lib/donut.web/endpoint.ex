@@ -1,41 +1,32 @@
 defmodule Donut.Web.Endpoint do
     use Phoenix.Endpoint, otp_app: :donut_web
 
-    socket "/socket", Donut.Web.UserSocket
-
-    # Serve at "/" the static files from "priv/static" directory.
-    #
-    # You should set gzip to true if you are running phoenix.digest
-    # when deploying your static files in production.
-    plug Plug.Static,
-        at: "/", from: :donut_web, gzip: false,
-        only: ~w(css fonts images js favicon.ico robots.txt)
-
     # Code reloading can be explicitly enabled under the
     # :code_reloader configuration of your endpoint.
     if code_reloading? do
         plug Phoenix.CodeReloader
     end
 
+    plug Plug.RequestId
     plug Plug.Logger
 
+    plug Corsica,
+        origins: [~r{^https?://localhost(:\d+)?$}],
+        allow_headers: [
+            "origin",
+            "content-type",
+            "accept-language",
+            "accept",
+            "authorization"
+        ]
+
     plug Plug.Parsers,
-        parsers: [:urlencoded, :multipart, :json],
+        parsers: [:urlencoded, :multipart, :json, Absinthe.Plug.Parser],
         pass: ["*/*"],
         json_decoder: Poison
 
-    plug Plug.MethodOverride
-    plug Plug.Head
-
-    # The session will be stored in the cookie and signed,
-    # this means its contents can be read but not tampered with.
-    # Set :encryption_salt if you would also like to encrypt it.
-    plug Plug.Session,
-        store: :cookie,
-        key: "_donut_web_key",
-        signing_salt: "bjXZQ+sI"
-
-    plug Donut.Web.Router
+    plug if(Mix.env != :dev, do: Absinthe.Plug, else: Absinthe.Plug.GraphiQL),
+        schema: Donut.GraphQL
 
     @doc """
       Callback invoked for dynamically configuring the endpoint.
