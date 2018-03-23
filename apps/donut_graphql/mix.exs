@@ -23,7 +23,11 @@ defmodule Donut.GraphQL.Mixfile do
     # Run "mix help deps" to learn about dependencies.
     defp deps do
         [
-            { :absinthe, "~> 1.4" }
+            { :absinthe, "~> 1.4" },
+            { :gobstopper_api, github: "ZURASTA/gobstopper", sparse: "apps/gobstopper_api"  },
+            { :gobstopper_service, github: "ZURASTA/gobstopper", sparse: "apps/gobstopper_service", only: [:dev, :test] },
+            { :sherbet_service, github: "ZURASTA/sherbet", sparse: "apps/sherbet_service", only: [:dev, :test] },
+            { :cake_service, github: "ZURASTA/cake", sparse: "apps/cake_service", only: [:dev, :test] }
         ]
     end
 end
