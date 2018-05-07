@@ -3,14 +3,16 @@
 use Mix.Config
 
 if Mix.env in [:test, :dev] do
+# Configure gobstopper service
 config :gobstopper_service,
     ecto_repos: [Gobstopper.Service.Repo]
 
-config :guardian_db, GuardianDb,
+config :guardian, Guardian.DB,
     repo: Gobstopper.Service.Repo,
     schema_name: "tokens",
     sweep_interval: 120
 
+# Configure sherbet service
 config :sherbet_service,
     ecto_repos: [Sherbet.Service.Repo]
 end
