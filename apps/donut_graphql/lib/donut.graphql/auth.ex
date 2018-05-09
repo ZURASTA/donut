@@ -12,4 +12,19 @@ defmodule Donut.GraphQL.Auth do
         field :access_token, non_null(:string), description: "An access token use to authenticate requests of an identity"
         field :refresh_token, non_null(:string), description: "A refresh token used manage the session"
     end
+
+    object :auth_mutations do
+        @desc "Login into an identity"
+        field :login, type: :session do
+            @desc "The email credential of the identity"
+            arg :email_credential, :email_credential
+
+            resolve fn
+                args = %{ email_credential: %{ email: email, password: password } }, env when map_size(args) == 1 ->
+                    { :ok, %{ access_token: "access", refresh_token: "refresh" } }
+                args, env ->
+                    { :error, "Missing credential" }
+            end
+        end
+    end
 end
