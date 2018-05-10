@@ -16,6 +16,7 @@ defmodule Donut.GraphQL.Result.Error do
 
     @desc "A generic error message"
     object :error do
+        @desc "The presentable error message"
         field :message, :string
 
         interface :generic_error
