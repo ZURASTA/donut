@@ -61,7 +61,7 @@ defmodule Donut.GraphQL.Result do
     defmacro result(name, types, resolver) do
         quote do
             union unquote(result(name)) do
-                types unquote(types ++ [:error])
+                types unquote(types ++ [:error, :internal_error])
 
                 resolve_type &Donut.GraphQL.Result.get_type(&1, &2, unquote(resolver))
             end
@@ -71,5 +71,6 @@ defmodule Donut.GraphQL.Result do
     @doc false
     @spec get_type(any, Absinthe.Resolution.t, resolver) :: atom | nil
     def get_type(%Donut.GraphQL.Result.Error{}, _, _), do: :error
+    def get_type(%Donut.GraphQL.Result.InternalError{}, _, _), do: :internal_error
     def get_type(object, env, resolver) when is_function(resolver), do: resolver.(object, env)
 end
