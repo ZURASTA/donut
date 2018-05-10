@@ -6,6 +6,8 @@ defmodule Donut.GraphQL.Result.InternalError do
       * `:exception` - Contains the presentable exception module.
       * `:stacktrace` - Contains the presentable stacktrace from where the
       exception was raised/trown.
+      * `:error_message` - The full error message that would have been displayed
+      normally.
     """
     use Absinthe.Schema.Notation
 
@@ -18,7 +20,8 @@ defmodule Donut.GraphQL.Result.InternalError do
     defstruct [
         :message,
         :exception,
-        :stacktrace
+        :stacktrace,
+        :error_message
     ]
 
     @desc "An internal server error"
@@ -49,10 +52,13 @@ defmodule Donut.GraphQL.Result.InternalError do
     @spec new(atom, term) :: Donut.GraphQL.Result.InternalError.t
     def new(type, exception) do
         [entry|_] = trace = System.stacktrace
+        stack = Exception.format_stacktrace(trace)
+        banner = Exception.format_banner(type, exception)
         %Donut.GraphQL.Result.InternalError{
-            message: "#{Exception.format_banner(type, exception)}\n    #{Exception.format_stacktrace_entry(entry)}",
+            message: "#{banner}\n    #{Exception.format_stacktrace_entry(entry)}",
             exception: inspect(exception),
-            stacktrace: Exception.format_stacktrace(trace)
+            stacktrace: stack,
+            error_message: "#{banner}\n#{stack}"
         }
     end
 end
