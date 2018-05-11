@@ -1,8 +1,5 @@
 defmodule Donut.GraphQL.Auth do
-    use Absinthe.Schema.Notation
-    import Donut.GraphQL.Result
-
-    require Logger
+    use Donut.GraphQL.Schema.Notation
 
     @desc "An email authorization credential"
     input_object :email_credential do
@@ -26,34 +23,10 @@ defmodule Donut.GraphQL.Auth do
             arg :email_credential, :email_credential
 
             resolve fn
-                args = %{ email_credential: %{ email: email, password: pass } }, %{ definition: %{ directives: directives } } when map_size(args) == 1 ->
-                    if Enum.any?(directives, fn
-                        %{ schema_node: %{ identifier: :debug } } -> true
-                        _ -> false
-                    end) do
-                        try do
-                            case Gobstopper.API.Auth.Email.login(email, pass) do
-                                { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
-                                { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
-                            end
-                        rescue
-                            exception ->
-                                err = Donut.GraphQL.Result.InternalError.new(:error, exception)
-                                Logger.error(err.error_message)
-
-                                { :ok, err }
-                        catch
-                            type, value when type in [:exit, :throw] ->
-                                err = Donut.GraphQL.Result.InternalError.new(type, value)
-                                Logger.error(err.error_message)
-
-                                { :ok, err }
-                        end
-                    else
-                        case Gobstopper.API.Auth.Email.login(email, pass) do
-                            { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
-                            { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
-                        end
+                args = %{ email_credential: %{ email: email, password: pass } }, _ ->
+                    case Gobstopper.API.Auth.Email.login(email, pass) do
+                        { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
+                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 %{}, _ ->
                     { :error, "Missing credential" }
