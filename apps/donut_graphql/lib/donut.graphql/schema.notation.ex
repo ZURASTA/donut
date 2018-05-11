@@ -9,34 +9,23 @@ defmodule Donut.GraphQL.Schema.Notation do
 
     require Logger
 
-    defmacro resolve(fun = { :fn, _, [{ :->, _, [args, _] }|_] }) when length(args) == 2 do
+    defmacro resolve(fun) do
         quote do
-            Absinthe.Schema.Notation.resolve(&Donut.GraphQL.Schema.Notation.resolver(&1, &2, unquote(fun)))
-        end
-    end
-    defmacro resolve(fun = { :fn, _, [{ :->, _, [args, _] }|_] }) when length(args) == 3 do
-        quote do
-            Absinthe.Schema.Notation.resolve(&Donut.GraphQL.Schema.Notation.resolver(&1, &2, &3, unquote(fun)))
+            Absinthe.Schema.Notation.resolve(&Donut.GraphQL.Schema.Notation.run(&1, &2, &3, unquote(fun)))
         end
     end
 
-    @doc false
-    def resolver(args, env = %{ definition: %{ directives: directives } }, fun) do
-        run(args, env, &(fun.(&1, &2)))
-    end
+    defp resolver(_, args, env, fun) when is_function(fun, 2), do: fun.(args, env)
+    defp resolver(parent, args, env, fun), do: fun.(parent, args, env)
 
     @doc false
-    def resolver(parent, args, env = %{ definition: %{ directives: directives } }, fun) do
-        run(args, env, &(fun.(parent, &1, &2)))
-    end
-
-    defp run(args, env = %{ definition: %{ directives: directives } }, fun) do
+    def run(parent, args, env = %{ definition: %{ directives: directives } }, fun) do
         if Enum.any?(directives, fn
             %{ schema_node: %{ identifier: :debug } } -> true
             _ -> false
         end) do
             try do
-                fun.(args, env)
+                resolver(parent, args, env, fun)
             rescue
                 exception ->
                     err = Donut.GraphQL.Result.InternalError.new(:error, exception)
@@ -51,7 +40,7 @@ defmodule Donut.GraphQL.Schema.Notation do
                     { :ok, err }
             end
         else
-            fun.(args, env)
+            resolver(parent, args, env, fun)
         end
     end
 end
