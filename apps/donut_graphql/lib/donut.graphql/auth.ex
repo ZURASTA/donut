@@ -13,8 +13,23 @@ defmodule Donut.GraphQL.Auth do
         field :refresh_token, non_null(:string), description: "A refresh token used manage the session"
     end
 
-    @desc "The collection of possible results from a login request"
+    @desc "An identity session"
+    input_object :input_session do
+        field :access_token, non_null(:string), description: "An access token use to authenticate requests of an identity"
+        field :refresh_token, non_null(:string), description: "A refresh token used manage the session"
+    end
+
+    @desc """
+    The collection of possible results from a login request. If successful
+    returns the new `Session`, otherwise returns an error.
+    """
     result :login, [:session]
+
+    @desc """
+    The collection of possible results from a login request. If successful
+    returns the `Session` that was invalidated, otherwise returns an error.
+    """
+    result :logout, [:session]
 
     object :auth_mutations do
         @desc "Login into an identity"
@@ -32,6 +47,17 @@ defmodule Donut.GraphQL.Auth do
                     { :error, "Missing credential" }
                 _, _ ->
                     { :error, "Only one credential can be specified" }
+            end
+        end
+
+        @desc "Logout from an identity"
+        field :logout, type: result(:logout) do
+            @desc "The session to logout from"
+            arg :session, non_null(:input_session)
+
+            resolve fn %{ session: session = %{ refresh_token: token } }, _ ->
+                Gobstopper.API.Auth.logout(token)
+                { :ok, session }
             end
         end
     end
