@@ -20,6 +20,12 @@ defmodule Donut.GraphQL.Auth do
     end
 
     @desc """
+    The collection of possible results from a register request. If successful
+    returns the new `Session`, otherwise returns an error.
+    """
+    result :register, [:session]
+
+    @desc """
     The collection of possible results from a login request. If successful
     returns the new `Session`, otherwise returns an error.
     """
@@ -38,6 +44,24 @@ defmodule Donut.GraphQL.Auth do
     result :refresh, [:session]
 
     object :auth_mutations do
+        @desc "Register an identity"
+        field :register, type: result(:register) do
+            @desc "The email credential to register with"
+            arg :email_credential, :email_credential
+
+            resolve fn
+                args = %{ email_credential: %{ email: email, password: pass } }, _ ->
+                    case Gobstopper.API.Auth.Email.register(email, pass) do
+                        { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
+                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+                %{}, _ ->
+                    { :error, "Missing credential" }
+                _, _ ->
+                    { :error, "Only one credential can be specified" }
+            end
+        end
+
         @desc "Login into an identity"
         field :login, type: result(:login) do
             @desc "The email credential of the identity"
