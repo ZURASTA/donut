@@ -26,10 +26,16 @@ defmodule Donut.GraphQL.Auth do
     result :login, [:session]
 
     @desc """
-    The collection of possible results from a login request. If successful
+    The collection of possible results from a logout request. If successful
     returns the `Session` that was invalidated, otherwise returns an error.
     """
     result :logout, [:session]
+
+    @desc """
+    The collection of possible results from a refresh request. If successful
+    returns the new `Session`, otherwise returns an error.
+    """
+    result :refresh, [:session]
 
     object :auth_mutations do
         @desc "Login into an identity"
@@ -58,6 +64,22 @@ defmodule Donut.GraphQL.Auth do
             resolve fn %{ session: session = %{ refresh_token: token } }, _ ->
                 Gobstopper.API.Auth.logout(token)
                 { :ok, session }
+            end
+        end
+
+        @desc """
+        Refresh the current session. This will invalidation the old tokens and
+        replace them with a new session.
+        """
+        field :refresh, type: result(:refresh) do
+            @desc "The session to refresh"
+            arg :session, non_null(:input_session)
+
+            resolve fn %{ session: session = %{ refresh_token: token } }, _ ->
+                case Gobstopper.API.Auth.refresh(token) do
+                    { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
+                    { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                end
             end
         end
     end
