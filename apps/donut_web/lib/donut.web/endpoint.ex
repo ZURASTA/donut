@@ -17,13 +17,17 @@ defmodule Donut.Web.Endpoint do
             "content-type",
             "accept-language",
             "accept",
-            "authorization"
+            "authorization",
+            "x-api-key"
         ]
 
     plug Plug.Parsers,
         parsers: [:urlencoded, :multipart, :json, Absinthe.Plug.Parser],
         pass: ["*/*"],
         json_decoder: Poison
+
+    plug Donut.Web.Context,
+        forward: [:absinthe]
 
     plug if(Mix.env != :dev, do: Absinthe.Plug, else: Absinthe.Plug.GraphiQL),
         schema: Donut.GraphQL
