@@ -3,8 +3,10 @@ defmodule Donut.GraphQL do
     import_types Donut.GraphQL.Result.Error
     import_types Donut.GraphQL.Result.InternalError
     import_types Donut.GraphQL.Auth
+    import_types Donut.GraphQL.Identity
 
     query do
+        import_fields :identity_queries
     end
 
     mutation do
