@@ -55,10 +55,8 @@ defmodule Donut.GraphQL.Auth do
                         { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
                         { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
-                %{}, _ ->
-                    { :error, "Missing credential" }
-                _, _ ->
-                    { :error, "Only one credential can be specified" }
+                %{}, _ -> { :error, "Missing credential" }
+                _, _ -> { :error, "Only one credential can be specified" }
             end
         end
 
@@ -73,10 +71,8 @@ defmodule Donut.GraphQL.Auth do
                         { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
                         { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
-                %{}, _ ->
-                    { :error, "Missing credential" }
-                _, _ ->
-                    { :error, "Only one credential can be specified" }
+                %{}, _ -> { :error, "Missing credential" }
+                _, _ -> { :error, "Only one credential can be specified" }
             end
         end
 
