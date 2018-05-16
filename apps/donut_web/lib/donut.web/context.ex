@@ -31,7 +31,7 @@ defmodule Donut.Web.Context do
     defp set_identity({ :ok, state }, ["Bearer " <> token|_]) do
         case Gobstopper.API.Auth.verify(token) do
             nil -> { :ok, state }
-            identity -> { :ok, Map.put(state, :identity, identity) }
+            identity -> { :ok, state |> Map.put(:identity, identity) |> Map.put(:access_token, token) }
         end
     end
     defp set_identity(error, _), do: error
