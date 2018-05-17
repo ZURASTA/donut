@@ -12,12 +12,61 @@ defmodule Donut.GraphQL.Identity do
         value :verified
     end
 
+    @desc "The priority of a contact"
+    enum :contact_priority do
+        value :primary
+        value :secondary
+    end
+
     @desc "The state of a given authentication credential"
     object :credential do
         field :type, non_null(:credential_type), description: "The type of credential"
         field :status, :verification_status, description: "The current verification status of the credential"
         field :presentable, :string, description: "The presentable information about the credential"
     end
+
+    @desc "A generic contact interface"
+    interface :contact do
+        field :priority, non_null(:contact_priority), description: "The priority of the contact"
+        field :status, non_null(:verification_status), description: "The current verification status of the contact"
+        field :presentable, non_null(:string), description: "The presentable information about the contact"
+    end
+
+    @desc "An email contact"
+    object :email do
+        field :priority, non_null(:contact_priority), description: "The priority of the email contact"
+        field :status, non_null(:verification_status), description: "The current verification status of the email contact"
+        field :presentable, non_null(:string), description: "The presentable information about the email contact"
+        field :email, non_null(:string), description: "The email address"
+
+        interface :contact
+
+        is_type_of fn
+            %{ email: _ } -> true
+            _ -> false
+        end
+    end
+
+    @desc "An mobile contact"
+    object :mobile do
+        field :priority, non_null(:contact_priority), description: "The priority of the mobile contact"
+        field :status, non_null(:verification_status), description: "The current verification status of the mobile contact"
+        field :presentable, non_null(:string), description: "The presentable information about the mobile contact"
+        field :mobile, non_null(:string), description: "The mobile number"
+
+        interface :contact
+
+        is_type_of fn
+            %{ mobile: _ } -> true
+            _ -> false
+        end
+    end
+
+    @desc """
+    The collection of possible results from a contact request. If successful
+    returns the `Contact` trying to be accessed, otherwise returns an error.
+    """
+    result :contact, [:email]
 
     @desc """
     The collection of possible results from a credential request. If successful
@@ -50,6 +99,40 @@ defmodule Donut.GraphQL.Identity do
                         { :ok, credentials } -> { :ok, filter_credentials(credentials, args) }
                         { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
+            end
+        end
+
+        @desc "The contacts associated with the identity"
+        field :contacts, list_of(result(:contact)) do
+            resolve fn
+                %{ id: identity }, args, %{ definition: %{ selections: selections } } ->
+                    contacts =
+                        Enum.reduce(selections, [], fn
+                            %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Object{ identifier: object } }, acc when object in [:email, :mobile] -> [object|acc]
+                            %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Interface{ identifier: :contact } }, acc -> [:email, :mobile] ++ acc
+                            _, acc -> acc
+                        end)
+                        |> Enum.uniq
+                        |> Enum.reduce([], fn
+                            :email, acc ->
+                                case Sherbet.API.Contact.Email.contacts(identity) do
+                                    { :ok, contacts } ->
+                                        acc ++ Enum.map(contacts, fn { status, priority, email } ->
+                                            %{ priority: priority, status: status, presentable: email, email: email }
+                                        end)
+                                    { :error, reason } -> %Donut.GraphQL.Result.Error{ message: reason }
+                                end
+                            :mobile, acc ->
+                                case Sherbet.API.Contact.Mobile.contacts(identity) do
+                                    { :ok, contacts } ->
+                                        acc ++ Enum.map(contacts, fn { status, priority, mobile } ->
+                                            %{ priority: priority, status: status, presentable: mobile, mobile: mobile }
+                                        end)
+                                    { :error, reason } -> %Donut.GraphQL.Result.Error{ message: reason }
+                                end
+                        end)
+
+                    { :ok, contacts }
             end
         end
     end
