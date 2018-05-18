@@ -53,6 +53,9 @@ defmodule Donut.GraphQL.Identity.Contact do
     object :contact_queries do
         @desc "The contacts associated with the identity"
         field :contacts, list_of(result(:contact)) do
+            @desc "The status of the contacts to retrieve"
+            arg :status, :verification_status
+
             resolve fn
                 %{ id: identity }, args, %{ definition: %{ selections: selections } } ->
                     contacts =
@@ -66,7 +69,7 @@ defmodule Donut.GraphQL.Identity.Contact do
                             :email, acc ->
                                 case Sherbet.API.Contact.Email.contacts(identity) do
                                     { :ok, contacts } ->
-                                        acc ++ Enum.map(contacts, fn { status, priority, email } ->
+                                        filter_contacts(contacts, args, acc, fn { status, priority, email } ->
                                             %{ priority: priority, status: status, presentable: email, email: email }
                                         end)
                                     { :error, reason } -> %Donut.GraphQL.Result.Error{ message: reason }
@@ -74,15 +77,28 @@ defmodule Donut.GraphQL.Identity.Contact do
                             :mobile, acc ->
                                 case Sherbet.API.Contact.Mobile.contacts(identity) do
                                     { :ok, contacts } ->
-                                        acc ++ Enum.map(contacts, fn { status, priority, mobile } ->
+                                        filter_contacts(contacts, args, acc, fn { status, priority, mobile } ->
                                             %{ priority: priority, status: status, presentable: mobile, mobile: mobile }
                                         end)
                                     { :error, reason } -> %Donut.GraphQL.Result.Error{ message: reason }
                                 end
                         end)
+                        |> Enum.reverse
 
                     { :ok, contacts }
             end
         end
+    end
+
+    defp filter_contacts(contacts, %{ status: status }, acc, get_object) do
+        Enum.reduce(contacts, acc, fn contact, acc ->
+            case get_object.(contact) do
+                object = %{ status: ^status } -> [object|acc]
+                _ -> acc
+            end
+        end)
+    end
+    defp filter_contacts(contacts, _, acc, get_object) do
+        Enum.reduce(contacts, acc, &([get_object.(&1)|&2]))
     end
 end
