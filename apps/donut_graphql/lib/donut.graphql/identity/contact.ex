@@ -56,6 +56,9 @@ defmodule Donut.GraphQL.Identity.Contact do
             @desc "The status of the contacts to retrieve"
             arg :status, :verification_status
 
+            @desc "The priority of the contacts to retrieve"
+            arg :priority, :contact_priority
+
             resolve fn
                 %{ id: identity }, args, %{ definition: %{ selections: selections } } ->
                     contacts =
@@ -90,6 +93,22 @@ defmodule Donut.GraphQL.Identity.Contact do
         end
     end
 
+    defp filter_contacts(contacts, %{ status: status, priority: priority }, acc, get_object) do
+        Enum.reduce(contacts, acc, fn contact, acc ->
+            case get_object.(contact) do
+                object = %{ status: ^status, priority: ^priority } -> [object|acc]
+                _ -> acc
+            end
+        end)
+    end
+    defp filter_contacts(contacts, %{ priority: priority }, acc, get_object) do
+        Enum.reduce(contacts, acc, fn contact, acc ->
+            case get_object.(contact) do
+                object = %{ priority: ^priority } -> [object|acc]
+                _ -> acc
+            end
+        end)
+    end
     defp filter_contacts(contacts, %{ status: status }, acc, get_object) do
         Enum.reduce(contacts, acc, fn contact, acc ->
             case get_object.(contact) do
