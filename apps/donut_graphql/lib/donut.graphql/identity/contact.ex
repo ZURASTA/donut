@@ -15,7 +15,7 @@ defmodule Donut.GraphQL.Identity.Contact do
     end
 
     @desc "An email contact"
-    object :email do
+    object :email_contact do
         field :priority, non_null(:contact_priority), description: "The priority of the email contact"
         field :status, non_null(:verification_status), description: "The current verification status of the email contact"
         field :presentable, non_null(:string), description: "The presentable information about the email contact"
@@ -30,7 +30,7 @@ defmodule Donut.GraphQL.Identity.Contact do
     end
 
     @desc "A mobile contact"
-    object :mobile do
+    object :mobile_contact do
         field :priority, non_null(:contact_priority), description: "The priority of the mobile contact"
         field :status, non_null(:verification_status), description: "The current verification status of the mobile contact"
         field :presentable, non_null(:string), description: "The presentable information about the mobile contact"
@@ -48,7 +48,7 @@ defmodule Donut.GraphQL.Identity.Contact do
     The collection of possible results from a contact request. If successful
     returns the `Contact` trying to be accessed, otherwise returns an error.
     """
-    result :contact, [:email, :mobile]
+    result :contact, [:email_contact, :mobile_contact]
 
     object :contact_queries do
         @desc "The contacts associated with the identity"
@@ -63,13 +63,13 @@ defmodule Donut.GraphQL.Identity.Contact do
                 %{ id: identity }, args, %{ definition: %{ selections: selections } } ->
                     contacts =
                         Enum.reduce(selections, [], fn
-                            %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Object{ identifier: object } }, acc when object in [:email, :mobile] -> [object|acc]
-                            %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Interface{ identifier: :contact } }, acc -> [:email, :mobile] ++ acc
+                            %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Object{ identifier: object } }, acc when object in [:email_contact, :mobile_contact] -> [object|acc]
+                            %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Interface{ identifier: :contact } }, acc -> [:email_contact, :mobile_contact] ++ acc
                             _, acc -> acc
                         end)
                         |> Enum.uniq
                         |> Enum.reduce([], fn
-                            :email, acc ->
+                            :email_contact, acc ->
                                 case Sherbet.API.Contact.Email.contacts(identity) do
                                     { :ok, contacts } ->
                                         filter_contacts(contacts, args, acc, fn { status, priority, email } ->
@@ -77,7 +77,7 @@ defmodule Donut.GraphQL.Identity.Contact do
                                         end)
                                     { :error, reason } -> %Donut.GraphQL.Result.Error{ message: reason }
                                 end
-                            :mobile, acc ->
+                            :mobile_contact, acc ->
                                 case Sherbet.API.Contact.Mobile.contacts(identity) do
                                     { :ok, contacts } ->
                                         filter_contacts(contacts, args, acc, fn { status, priority, mobile } ->
