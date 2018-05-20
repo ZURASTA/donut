@@ -13,7 +13,8 @@ defmodule Donut.Mixfile do
             docs: [
                 main: "donut",
                 extras: [
-                    "README.md": [filename: "donut", title: "Donut"]
+                    "README.md": [filename: "donut", title: "Donut"],
+                    "graphql.md": [filename: "graphql", title: "GraphQL"]
                 ]
             ]
         ]
@@ -59,7 +60,7 @@ defmodule Donut.Mixfile do
         { schema, 0 } = System.cmd("get-graphql-schema", [Donut.Web.Endpoint.static_url])
         File.write!("donut.graphql", schema)
 
-        { _, 0 } = System.cmd("ruby", ["-rgraphql-docs", "-e", "GraphQLDocs.build filename: 'donut.graphql', base_url: '.', output_dir: 'doc/api'"])
+        { _, 0 } = System.cmd("ruby", ["-rgraphql-docs", "-e", "GraphQLDocs.build filename: 'donut.graphql', base_url: '/donut/api', output_dir: 'doc/api'"])
 
         IO.puts "#{IO.ANSI.green}GraphQL API docs successfully generated#{IO.ANSI.reset}"
         IO.puts "#{IO.ANSI.green}View them at \"doc/api/index.html\".#{IO.ANSI.reset}"

@@ -1,6 +1,6 @@
 # GraphQL API
 
-The service exposes a public GraphQL interface. The full documentation can be found at [/api](/api).
+The service exposes a public GraphQL interface. The full documentation can be found at [/donut/api](/donut/api).
 
 ## Error Handling
 
