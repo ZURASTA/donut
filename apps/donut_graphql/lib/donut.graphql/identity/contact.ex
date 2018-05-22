@@ -120,4 +120,22 @@ defmodule Donut.GraphQL.Identity.Contact do
     defp filter_contacts(contacts, _, acc, get_object) do
         Enum.reduce(contacts, acc, &([get_object.(&1)|&2]))
     end
+
+    result :request_remove_contact, [:string]
+
+    object :contact_mutations do
+        @desc "Request a contact be removed from its associated identity"
+        field :request_remove_contact, type: result(:request_remove_contact) do
+            @desc "The contact to request be removed"
+            arg :contact, non_null(:string)
+
+            resolve fn
+                %{ contact: contact }, _ ->
+                    case Sherbet.API.Contact.Email.request_removal(contact) do
+                        :ok -> { :ok, "Sent" }
+                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+            end
+        end
+    end
 end
