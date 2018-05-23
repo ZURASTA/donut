@@ -126,15 +126,25 @@ defmodule Donut.GraphQL.Identity.Contact do
     object :contact_mutations do
         @desc "Request a contact be removed from its associated identity"
         field :request_remove_contact, type: result(:request_remove_contact) do
-            @desc "The contact to request be removed"
-            arg :contact, non_null(:string)
+            @desc "The email contact to request be removed"
+            arg :email, :string
+
+            @desc "The mobile contact to request be removed"
+            arg :mobile, :string
 
             resolve fn
-                %{ contact: contact }, _ ->
-                    case Sherbet.API.Contact.Email.request_removal(contact) do
-                        :ok -> { :ok, "Sent" }
+                args = %{ email: email }, _ when map_size(args) == 1 ->
+                    case Sherbet.API.Contact.Email.request_removal(email) do
+                        :ok -> { :ok, "A removal link was sent to the provided email address" }
                         { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
+                args = %{ mobile: mobile }, _ when map_size(args) == 1 ->
+                    case Sherbet.API.Contact.Mobile.request_removal(mobile) do
+                        :ok -> { :ok, "A removal code was sent to the provided mobile number" }
+                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+                %{}, _ -> { :error, "Missing contact" }
+                _, _ -> { :error, "Only one contact can be specified" }
             end
         end
     end
