@@ -123,6 +123,8 @@ defmodule Donut.GraphQL.Identity.Contact do
 
     result :request_remove_contact, [:string]
 
+    result :finalise_remove_contact, [:string]
+
     object :contact_mutations do
         @desc "Request a contact be removed from its associated identity"
         field :request_remove_contact, type: result(:request_remove_contact) do
@@ -144,6 +146,33 @@ defmodule Donut.GraphQL.Identity.Contact do
                         { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 %{}, _ -> { :error, "Missing contact" }
+                _, _ -> { :error, "Only one contact can be specified" }
+            end
+        end
+
+        @desc "Finalise a contact be removed from its associated identity"
+        field :finalise_remove_contact, type: result(:finalise_remove_contact) do
+            @desc "The email contact to be removed"
+            arg :email, :string
+
+            @desc "The mobile contact to be removed"
+            arg :mobile, :string
+
+            @desc "The confirmation key"
+            arg :key, non_null(:string)
+
+            resolve fn
+                args = %{ email: email, key: key }, _ when map_size(args) == 2 ->
+                    case Sherbet.API.Contact.Email.finalise_removal(email, key) do
+                        :ok -> { :ok, "The email address was removed" }
+                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+                args = %{ mobile: mobile, key: key }, _ when map_size(args) == 2 ->
+                    case Sherbet.API.Contact.Mobile.finalise_removal(mobile, key) do
+                        :ok -> { :ok, "The mobile number was removed" }
+                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+                %{ key: _ }, _ -> { :error, "Missing contact" }
                 _, _ -> { :error, "Only one contact can be specified" }
             end
         end
