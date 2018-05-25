@@ -121,8 +121,16 @@ defmodule Donut.GraphQL.Identity.Contact do
         Enum.reduce(contacts, acc, &([get_object.(&1)|&2]))
     end
 
+    @desc """
+    The collection of possible results from a remove contact request. If
+    successful returns a `String`, otherwise returns an error.
+    """
     result :request_remove_contact, [:string]
 
+    @desc """
+    The collection of possible results from a finalising a remove contact
+    request. If successful returns a `String`, otherwise returns an error.
+    """
     result :finalise_remove_contact, [:string]
 
     object :contact_mutations do
