@@ -12,6 +12,7 @@ defmodule Donut.GraphQL do
     mutation do
         import_fields :auth_mutations
         import_fields :contact_mutations
+        import_fields :identity_mutations
     end
 
     directive :debug do
