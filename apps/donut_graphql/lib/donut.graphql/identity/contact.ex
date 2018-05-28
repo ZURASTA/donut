@@ -123,15 +123,15 @@ defmodule Donut.GraphQL.Identity.Contact do
 
     @desc """
     The collection of possible results from a remove contact request. If
-    successful returns a `String`, otherwise returns an error.
+    successful returns a `null`, otherwise returns an error.
     """
-    result :request_remove_contact, [:string]
+    result :request_remove_contact, []
 
     @desc """
     The collection of possible results from a finalising a remove contact
-    request. If successful returns a `String`, otherwise returns an error.
+    request. If successful returns a `null`, otherwise returns an error.
     """
-    result :finalise_remove_contact, [:string]
+    result :finalise_remove_contact, []
 
     object :contact_mutations do
         @desc "Request a contact be removed from its associated identity"
@@ -145,12 +145,12 @@ defmodule Donut.GraphQL.Identity.Contact do
             resolve fn
                 args = %{ email: email }, _ when map_size(args) == 1 ->
                     case Sherbet.API.Contact.Email.request_removal(email) do
-                        :ok -> { :ok, "A removal link was sent to the provided email address" }
+                        :ok -> { :ok, nil }
                         { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 args = %{ mobile: mobile }, _ when map_size(args) == 1 ->
                     case Sherbet.API.Contact.Mobile.request_removal(mobile) do
-                        :ok -> { :ok, "A removal code was sent to the provided mobile number" }
+                        :ok -> { :ok, nil }
                         { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 %{}, _ -> { :error, "Missing contact" }
@@ -172,12 +172,12 @@ defmodule Donut.GraphQL.Identity.Contact do
             resolve fn
                 args = %{ email: email, key: key }, _ when map_size(args) == 2 ->
                     case Sherbet.API.Contact.Email.finalise_removal(email, key) do
-                        :ok -> { :ok, "The email address was removed" }
+                        :ok -> { :ok, nil }
                         { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 args = %{ mobile: mobile, key: key }, _ when map_size(args) == 2 ->
                     case Sherbet.API.Contact.Mobile.finalise_removal(mobile, key) do
-                        :ok -> { :ok, "The mobile number was removed" }
+                        :ok -> { :ok, nil }
                         { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 %{ key: _ }, _ -> { :error, "Missing contact" }
