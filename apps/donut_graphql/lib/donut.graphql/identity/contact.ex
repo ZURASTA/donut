@@ -185,4 +185,90 @@ defmodule Donut.GraphQL.Identity.Contact do
             end
         end
     end
+
+    @desc "A generic mutable contact interface"
+    interface :mutable_contact do
+        field :immutable, non_null(:contact), description: "The immutable fields of a contact"
+    end
+
+    @desc "A mutable email contact"
+    object :mutable_email_contact do
+        field :immutable, non_null(:email_contact), description: "The immutable fields of an email contact"
+
+        interface :mutable_contact
+
+        is_type_of fn
+            %{ immutable: %{ email: _ } } -> true
+            _ -> false
+        end
+    end
+
+    @desc "A mutable mobile contact"
+    object :mutable_mobile_contact do
+        field :immutable, non_null(:mobile_contact), description: "The immutable fields of a mobile contact"
+
+        interface :mutable_contact
+
+        is_type_of fn
+            %{ immutable: %{ mobile: _ } } -> true
+            _ -> false
+        end
+    end
+
+    @desc """
+    The collection of possible results from a contact mutate request. If
+    successful returns the `MutableContact` trying to be modified, otherwise
+    returns an error.
+    """
+    result :mutable_contact, [:mutable_email_contact, :mutable_mobile_contact]
+
+    object :contact_identity_mutations do
+        @desc "Add a contact to be associated with an identity"
+        field :add_contact, type: result(:mutable_contact) do
+            @desc "The email contact to be added"
+            arg :email, :string
+
+            @desc "The mobile contact to be added"
+            arg :mobile, :string
+
+            resolve fn
+                %{ immutable: %{ id: identity } }, args = %{ email: email }, _ when map_size(args) == 1 ->
+                    case Sherbet.API.Contact.Email.add(identity, email) do
+                        :ok ->
+                            case Sherbet.API.Contact.Email.contacts(identity) do
+                                { :ok, contacts } ->
+                                    Enum.find_value(contacts, fn
+                                        { status, priority, ^email } -> %{ priority: priority, status: status, presentable: email, email: email }
+                                        _ -> false
+                                    end)
+                                    |> case do
+                                        false -> { :ok, %Donut.GraphQL.Result.Error{ message: "Failed to retrieve newly added email contact" } }
+                                        contact -> { :ok, %{ immutable: contact } }
+                                    end
+                                { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                            end
+                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+                %{ immutable: %{ id: identity } }, args = %{ mobile: mobile }, _ when map_size(args) == 1 ->
+                    case Sherbet.API.Contact.Mobile.add(identity, mobile) do
+                        :ok ->
+                            case Sherbet.API.Contact.Mobile.contacts(identity) do
+                                { :ok, contacts } ->
+                                    Enum.find_value(contacts, fn
+                                        { status, priority, ^mobile } -> %{ priority: priority, status: status, presentable: mobile, mobile: mobile }
+                                        _ -> false
+                                    end)
+                                    |> case do
+                                        false -> { :ok, %Donut.GraphQL.Result.Error{ message: "Failed to retrieve newly added mobile contact" } }
+                                        contact -> { :ok, %{ immutable: contact } }
+                                    end
+                                { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                            end
+                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+                _, %{}, _ -> { :error, "Missing contact" }
+                _, _, _ -> { :error, "Only one contact can be specified" }
+            end
+        end
+    end
 end

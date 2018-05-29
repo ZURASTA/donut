@@ -42,9 +42,11 @@ defmodule Donut.GraphQL.Identity do
         end
     end
 
-    @desc "An identity"
+    @desc "A mutable identity"
     object :mutable_identity do
         field :immutable, non_null(:identity), description: "The immutable fields of an identity"
+
+        import_fields :contact_identity_mutations
     end
 
     @desc """
