@@ -9,7 +9,7 @@ defmodule Donut.GraphQL.Result.InternalError do
       * `:error_message` - The full error message that would have been displayed
       normally.
     """
-    use Absinthe.Schema.Notation
+    use Donut.GraphQL.Schema.Notation
 
     @type t :: %Donut.GraphQL.Result.InternalError{
         message: String.t,

@@ -4,7 +4,7 @@ defmodule Donut.GraphQL.Result.Error do
 
       * `:message` - Contains the presentable error message.
     """
-    use Absinthe.Schema.Notation
+    use Donut.GraphQL.Schema.Notation
 
     defstruct [:message]
 
@@ -26,4 +26,10 @@ defmodule Donut.GraphQL.Result.Error do
             _ -> false
         end
     end
+
+    @desc """
+    The collection of possible error results from a request. If
+    successful returns `null`, otherwise returns an error.
+    """
+    result :error, []
 end
