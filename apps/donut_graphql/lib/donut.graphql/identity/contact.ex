@@ -14,32 +14,55 @@ defmodule Donut.GraphQL.Identity.Contact do
         field :presentable, non_null(:string), description: "The presentable information about the contact"
     end
 
-    @desc "An email contact"
-    object :email_contact do
-        field :priority, non_null(:contact_priority), description: "The priority of the email contact"
-        field :status, non_null(:verification_status), description: "The current verification status of the email contact"
-        field :presentable, non_null(:string), description: "The presentable information about the email contact"
-        field :email, non_null(:string), description: "The email address"
+    @desc "A generic mutable contact interface"
+    interface :mutable_contact do
+        field :immutable, non_null(:contact), description: "The immutable fields of a contact"
+    end
 
-        interface :contact
+    @desc "An email contact"
+    mutable :email_contact do
+        immutable do
+            field :priority, non_null(:contact_priority), description: "The priority of the email contact"
+            field :status, non_null(:verification_status), description: "The current verification status of the email contact"
+            field :presentable, non_null(:string), description: "The presentable information about the email contact"
+            field :email, non_null(:string), description: "The email address"
+
+            interface :contact
+
+            is_type_of fn
+                %{ email: _ } -> true
+                _ -> false
+            end
+        end
+
+        interface :mutable_contact
 
         is_type_of fn
-            %{ email: _ } -> true
+            %{ immutable: %{ email: _ } } -> true
             _ -> false
         end
     end
 
     @desc "A mobile contact"
-    object :mobile_contact do
-        field :priority, non_null(:contact_priority), description: "The priority of the mobile contact"
-        field :status, non_null(:verification_status), description: "The current verification status of the mobile contact"
-        field :presentable, non_null(:string), description: "The presentable information about the mobile contact"
-        field :mobile, non_null(:string), description: "The mobile number"
+    mutable :mobile_contact do
+        immutable do
+            field :priority, non_null(:contact_priority), description: "The priority of the mobile contact"
+            field :status, non_null(:verification_status), description: "The current verification status of the mobile contact"
+            field :presentable, non_null(:string), description: "The presentable information about the mobile contact"
+            field :mobile, non_null(:string), description: "The mobile number"
 
-        interface :contact
+            interface :contact
+
+            is_type_of fn
+                %{ mobile: _ } -> true
+                _ -> false
+            end
+        end
+
+        interface :mutable_contact
 
         is_type_of fn
-            %{ mobile: _ } -> true
+            %{ immutable: %{ mobile: _ } } -> true
             _ -> false
         end
     end
@@ -171,35 +194,6 @@ defmodule Donut.GraphQL.Identity.Contact do
                 %{ key: _ }, _ -> { :error, "Missing contact" }
                 _, _ -> { :error, "Only one contact can be specified" }
             end
-        end
-    end
-
-    @desc "A generic mutable contact interface"
-    interface :mutable_contact do
-        field :immutable, non_null(:contact), description: "The immutable fields of a contact"
-    end
-
-    @desc "A mutable email contact"
-    object :mutable_email_contact do
-        field :immutable, non_null(:email_contact), description: "The immutable fields of an email contact"
-
-        interface :mutable_contact
-
-        is_type_of fn
-            %{ immutable: %{ email: _ } } -> true
-            _ -> false
-        end
-    end
-
-    @desc "A mutable mobile contact"
-    object :mutable_mobile_contact do
-        field :immutable, non_null(:mobile_contact), description: "The immutable fields of a mobile contact"
-
-        interface :mutable_contact
-
-        is_type_of fn
-            %{ immutable: %{ mobile: _ } } -> true
-            _ -> false
         end
     end
 

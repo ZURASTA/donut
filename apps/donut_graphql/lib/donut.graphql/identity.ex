@@ -10,12 +10,16 @@ defmodule Donut.GraphQL.Identity do
     end
 
     @desc "An identity"
-    object :identity do
-        field :id, non_null(:id), description: "The unique ID of the identity"
-        field :token, non_null(:string), description: "The access token that granted access to this identity"
+    mutable :identity do
+        immutable do
+            field :id, non_null(:id), description: "The unique ID of the identity"
+            field :token, non_null(:string), description: "The access token that granted access to this identity"
 
-        import_fields :credential_queries
-        import_fields :contact_queries
+            import_fields :credential_queries
+            import_fields :contact_queries
+        end
+
+        import_fields :contact_identity_mutations
     end
 
     @desc """
@@ -40,13 +44,6 @@ defmodule Donut.GraphQL.Identity do
                 _, _ -> { :error, "Missing token" }
             end
         end
-    end
-
-    @desc "A mutable identity"
-    object :mutable_identity do
-        field :immutable, non_null(:identity), description: "The immutable fields of an identity"
-
-        import_fields :contact_identity_mutations
     end
 
     @desc """
