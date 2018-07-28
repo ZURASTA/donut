@@ -20,7 +20,7 @@ defmodule Donut.GraphQL.Identity.Contact do
     end
 
     @desc "An email contact"
-    mutable :email_contact do
+    mutable_object :email_contact do
         immutable do
             field :priority, non_null(:contact_priority), description: "The priority of the email contact"
             field :status, non_null(:verification_status), description: "The current verification status of the email contact"
@@ -44,7 +44,7 @@ defmodule Donut.GraphQL.Identity.Contact do
     end
 
     @desc "A mobile contact"
-    mutable :mobile_contact do
+    mutable_object :mobile_contact do
         immutable do
             field :priority, non_null(:contact_priority), description: "The priority of the mobile contact"
             field :status, non_null(:verification_status), description: "The current verification status of the mobile contact"

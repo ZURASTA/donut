@@ -10,7 +10,7 @@ defmodule Donut.GraphQL.Identity do
     end
 
     @desc "An identity"
-    mutable :identity do
+    mutable_object :identity do
         immutable do
             field :id, non_null(:id), description: "The unique ID of the identity"
             field :token, non_null(:string), description: "The access token that granted access to this identity"

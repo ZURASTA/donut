@@ -6,7 +6,12 @@ defmodule Donut.GraphQL.Schema.Notation do
     defmacro __using__(_options) do
         quote do
             use Absinthe.Schema.Notation, except: [resolve: 1]
-            import Donut.GraphQL.Schema.Notation, only: [resolve: 1, mutable: 2, mutable: 3, immutable: 1, immutable: 2]
+            import Donut.GraphQL.Schema.Notation, only: [
+                resolve: 1,
+                mutable: 3, mutable: 4,
+                immutable: 1, immutable: 2,
+                mutable_object: 2, mutable_object: 3,
+            ]
             import Donut.GraphQL.Result
         end
     end
@@ -60,13 +65,13 @@ defmodule Donut.GraphQL.Schema.Notation do
 
     defmacro immutable(_attrs \\ [], _block), do: raise "Must be used inside a mutable object"
 
-    defmacro mutable(name, attrs \\ [], block) do
+    defmacro mutable(type, name, attrs \\ [], block) do
         { mutable_body, immutable } = Macro.prewalk(block, nil, fn
             { :immutable, context, body }, _ ->
                 field = quote do
                     field :immutable, non_null(unquote(name)), description: unquote("The immutable #{String.replace(to_string(name), "_", " ")} fields")
                 end
-                { field, { :object, context, [name|body] } }
+                { field, { type, context, [name|body] } }
             node, acc -> { node, acc }
         end)
 
@@ -75,7 +80,13 @@ defmodule Donut.GraphQL.Schema.Notation do
             unquote(immutable)
 
             @desc description
-            object unquote(String.to_atom("mutable_#{to_string(name)}")), unquote(attrs), unquote(mutable_body)
+            unquote(type)(unquote(String.to_atom("mutable_#{to_string(name)}")), unquote(attrs), unquote(mutable_body))
+        end
+    end
+
+    defmacro mutable_object(name, attrs \\ [], block) do
+        quote do
+            mutable(:object, unquote(name), unquote(attrs), unquote(block))
         end
     end
 end
