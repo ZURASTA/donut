@@ -11,6 +11,7 @@ defmodule Donut.GraphQL.Schema.Notation do
                 mutable: 3, mutable: 4,
                 immutable: 1, immutable: 2,
                 mutable_object: 2, mutable_object: 3,
+                mutable_interface: 2, mutable_interface: 3
             ]
             import Donut.GraphQL.Result
         end
@@ -87,6 +88,12 @@ defmodule Donut.GraphQL.Schema.Notation do
     defmacro mutable_object(name, attrs \\ [], block) do
         quote do
             mutable(:object, unquote(name), unquote(attrs), unquote(block))
+        end
+    end
+
+    defmacro mutable_interface(name, attrs \\ [], block) do
+        quote do
+            mutable(:interface, unquote(name), unquote(attrs), unquote(block))
         end
     end
 end

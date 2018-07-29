@@ -8,15 +8,12 @@ defmodule Donut.GraphQL.Identity.Contact do
     end
 
     @desc "A generic contact interface"
-    interface :contact do
-        field :priority, non_null(:contact_priority), description: "The priority of the contact"
-        field :status, non_null(:verification_status), description: "The current verification status of the contact"
-        field :presentable, non_null(:string), description: "The presentable information about the contact"
-    end
-
-    @desc "A generic mutable contact interface"
-    interface :mutable_contact do
-        field :immutable, non_null(:contact), description: "The immutable fields of a contact"
+    mutable_interface :contact do
+        immutable do
+            field :priority, non_null(:contact_priority), description: "The priority of the contact"
+            field :status, non_null(:verification_status), description: "The current verification status of the contact"
+            field :presentable, non_null(:string), description: "The presentable information about the contact"
+        end
     end
 
     @desc "An email contact"
