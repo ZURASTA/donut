@@ -8,7 +8,7 @@ defmodule Donut.GraphQL.Schema.Notation do
             use Absinthe.Schema.Notation, except: [resolve: 1]
             import Donut.GraphQL.Schema.Notation, only: [
                 resolve: 1,
-                mutable: 3, mutable: 4,
+                mutable: 2, mutable: 3,
                 immutable: 1, immutable: 2,
                 mutable_object: 2, mutable_object: 3,
                 mutable_interface: 2, mutable_interface: 3
@@ -64,9 +64,25 @@ defmodule Donut.GraphQL.Schema.Notation do
         end
     end
 
+    defp document_type([]), do: nil
+    defp document_type([%Absinthe.Blueprint.Document.Operation{ type: type }|_]), do: type
+    defp document_type([_|paths]), do: document_type(paths)
+    defp document_type(env), do: document_type(env[:paths])
+
+    def mutable(immutable_fields, mutable_fields \\ %{}, env) do
+        immutable_fields = if(is_function(immutable_fields), do: immutable_fields.(), else: immutable_fields)
+
+        case document_type(env) do
+            :query -> immutable_fields
+            :mutation ->
+                mutable_fields = if(is_function(mutable_fields), do: mutable_fields.(), else: mutable_fields)
+                Map.merge(%{ immutable: immutable_fields }, mutable_fields)
+        end
+    end
+
     defmacro immutable(_attrs \\ [], _block), do: raise "Must be used inside a mutable object"
 
-    defmacro mutable(type, name, attrs \\ [], block) do
+    defmacro mutable(type, name, attrs, block) do
         { mutable_body, immutable } = Macro.prewalk(block, nil, fn
             { :immutable, context, body }, _ ->
                 field = quote do
@@ -87,13 +103,13 @@ defmodule Donut.GraphQL.Schema.Notation do
 
     defmacro mutable_object(name, attrs \\ [], block) do
         quote do
-            mutable(:object, unquote(name), unquote(attrs), unquote(block))
+            Donut.GraphQL.Schema.Notation.mutable(:object, unquote(name), unquote(attrs), unquote(block))
         end
     end
 
     defmacro mutable_interface(name, attrs \\ [], block) do
         quote do
-            mutable(:interface, unquote(name), unquote(attrs), unquote(block))
+            Donut.GraphQL.Schema.Notation.mutable(:interface, unquote(name), unquote(attrs), unquote(block))
         end
     end
 end
