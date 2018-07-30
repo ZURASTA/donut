@@ -16,7 +16,7 @@ defmodule Donut.GraphQL.Identity do
             field :token, non_null(:string), description: "The access token that granted access to this identity"
 
             import_fields :credential_queries
-            import_fields :contact_queries
+            import_fields mutable(:contact_queries)
         end
 
         import_fields :contact_identity_mutations
@@ -60,12 +60,12 @@ defmodule Donut.GraphQL.Identity do
             arg :access_token, :string
 
             resolve fn
-                %{ access_token: token }, _ ->
+                %{ access_token: token }, env ->
                     case Gobstopper.API.Auth.verify(token) do
                         nil ->  { :ok, %Donut.GraphQL.Result.Error{ message: "Invalid access token" } }
-                        identity -> { :ok, %{ immutable: %{ id: identity, token: token } } }
+                        identity -> { :ok, mutable(%{ id: identity, token: token }, env) }
                     end
-                _, %{ context: %{ identity: identity, access_token: token } } -> { :ok, %{ immutable: %{ id: identity, token: token } } }
+                _, env = %{ context: %{ identity: identity, access_token: token } } -> { :ok, mutable(%{ id: identity, token: token }, env) }
                 _, _ -> { :error, "Missing token" }
             end
         end

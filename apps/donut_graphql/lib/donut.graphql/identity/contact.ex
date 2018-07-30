@@ -33,11 +33,6 @@ defmodule Donut.GraphQL.Identity.Contact do
         end
 
         interface :mutable_contact
-
-        is_type_of fn
-            %{ immutable: %{ email: _ } } -> true
-            _ -> false
-        end
     end
 
     @desc "A mobile contact"
@@ -57,11 +52,6 @@ defmodule Donut.GraphQL.Identity.Contact do
         end
 
         interface :mutable_contact
-
-        is_type_of fn
-            %{ immutable: %{ mobile: _ } } -> true
-            _ -> false
-        end
     end
 
     @desc """
@@ -70,45 +60,54 @@ defmodule Donut.GraphQL.Identity.Contact do
     """
     result :contact, [:email_contact, :mobile_contact]
 
-    object :contact_queries do
-        @desc "The contacts associated with the identity"
-        field :contacts, list_of(result(:contact)) do
-            @desc "The status of the contacts to retrieve"
-            arg :status, :verification_status
+    @desc """
+    The collection of possible results from a contact mutate request. If
+    successful returns the `MutableContact` trying to be modified, otherwise
+    returns an error.
+    """
+    result :mutable_contact, [:mutable_email_contact, :mutable_mobile_contact]
 
-            @desc "The priority of the contacts to retrieve"
-            arg :priority, :contact_priority
+    mutable_object :contact_queries do
+        immutable do
+            @desc "The contacts associated with the identity"
+            field :contacts, list_of(result(mutable(:contact))) do
+                @desc "The status of the contacts to retrieve"
+                arg :status, :verification_status
 
-            resolve fn
-                %{ id: identity }, args, %{ definition: %{ selections: selections } } ->
-                    contacts =
-                        Enum.reduce(selections, [], fn
-                            %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Object{ identifier: object } }, acc when object in [:email_contact, :mobile_contact] -> [object|acc]
-                            %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Interface{ identifier: :contact } }, acc -> [:email_contact, :mobile_contact] ++ acc
-                            _, acc -> acc
-                        end)
-                        |> Enum.uniq
-                        |> Enum.reduce([], fn
-                            :email_contact, acc ->
-                                case Sherbet.API.Contact.Email.contacts(identity) do
-                                    { :ok, contacts } ->
-                                        filter_contacts(contacts, args, acc, fn { status, priority, email } ->
-                                            %{ priority: priority, status: status, presentable: email, email: email }
-                                        end)
-                                    { :error, reason } -> %Donut.GraphQL.Result.Error{ message: reason }
-                                end
-                            :mobile_contact, acc ->
-                                case Sherbet.API.Contact.Mobile.contacts(identity) do
-                                    { :ok, contacts } ->
-                                        filter_contacts(contacts, args, acc, fn { status, priority, mobile } ->
-                                            %{ priority: priority, status: status, presentable: mobile, mobile: mobile }
-                                        end)
-                                    { :error, reason } -> %Donut.GraphQL.Result.Error{ message: reason }
-                                end
-                        end)
-                        |> Enum.reverse
+                @desc "The priority of the contacts to retrieve"
+                arg :priority, :contact_priority
 
-                    { :ok, contacts }
+                resolve fn
+                    %{ id: identity }, args, env = %{ definition: %{ selections: selections } } ->
+                        contacts =
+                            Enum.reduce(selections, [], fn
+                                %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Object{ identifier: object } }, acc when object in [mutable(:email_contact), mutable(:mobile_contact)] -> [object|acc]
+                                %Absinthe.Blueprint.Document.Fragment.Inline{ schema_node: %Absinthe.Type.Interface{ identifier: contact } }, acc when contact in [:contact, mutable(:contact)] -> [mutable(:email_contact), mutable(:mobile_contact)] ++ acc
+                                _, acc -> acc
+                            end)
+                            |> Enum.uniq
+                            |> Enum.reduce([], fn
+                                mutable(:email_contact), acc ->
+                                    case Sherbet.API.Contact.Email.contacts(identity) do
+                                        { :ok, contacts } ->
+                                            filter_contacts(contacts, args, acc, fn { status, priority, email } ->
+                                                mutable(%{ priority: priority, status: status, presentable: email, email: email }, env)
+                                            end)
+                                        { :error, reason } -> %Donut.GraphQL.Result.Error{ message: reason }
+                                    end
+                                mutable(:mobile_contact), acc ->
+                                    case Sherbet.API.Contact.Mobile.contacts(identity) do
+                                        { :ok, contacts } ->
+                                            filter_contacts(contacts, args, acc, fn { status, priority, mobile } ->
+                                                mutable(%{ priority: priority, status: status, presentable: mobile, mobile: mobile }, env)
+                                            end)
+                                        { :error, reason } -> %Donut.GraphQL.Result.Error{ message: reason }
+                                    end
+                            end)
+                            |> Enum.reverse
+
+                        { :ok, contacts }
+                end
             end
         end
     end
@@ -194,13 +193,6 @@ defmodule Donut.GraphQL.Identity.Contact do
         end
     end
 
-    @desc """
-    The collection of possible results from a contact mutate request. If
-    successful returns the `MutableContact` trying to be modified, otherwise
-    returns an error.
-    """
-    result :mutable_contact, [:mutable_email_contact, :mutable_mobile_contact]
-
     object :contact_identity_mutations do
         @desc "Add a contact to be associated with an identity"
         field :add_contact, type: result(:mutable_contact) do
@@ -211,7 +203,7 @@ defmodule Donut.GraphQL.Identity.Contact do
             arg :mobile, :string
 
             resolve fn
-                %{ immutable: %{ id: identity } }, args = %{ email: email }, _ when map_size(args) == 1 ->
+                %{ id: identity }, args = %{ email: email }, env when map_size(args) == 1 ->
                     case Sherbet.API.Contact.Email.add(identity, email) do
                         :ok ->
                             case Sherbet.API.Contact.Email.contacts(identity) do
@@ -222,13 +214,13 @@ defmodule Donut.GraphQL.Identity.Contact do
                                     end)
                                     |> case do
                                         false -> { :ok, %Donut.GraphQL.Result.Error{ message: "Failed to retrieve newly added email contact" } }
-                                        contact -> { :ok, %{ immutable: contact } }
+                                        contact -> { :ok, mutable(contact, env) }
                                     end
                                 { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                             end
                         { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
-                %{ immutable: %{ id: identity } }, args = %{ mobile: mobile }, _ when map_size(args) == 1 ->
+                %{ id: identity }, args = %{ mobile: mobile }, env when map_size(args) == 1 ->
                     case Sherbet.API.Contact.Mobile.add(identity, mobile) do
                         :ok ->
                             case Sherbet.API.Contact.Mobile.contacts(identity) do
@@ -239,7 +231,7 @@ defmodule Donut.GraphQL.Identity.Contact do
                                     end)
                                     |> case do
                                         false -> { :ok, %Donut.GraphQL.Result.Error{ message: "Failed to retrieve newly added mobile contact" } }
-                                        contact -> { :ok, %{ immutable: contact } }
+                                        contact -> { :ok, mutable(contact, env) }
                                     end
                                 { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                             end
