@@ -35,7 +35,7 @@ defmodule Donut.GraphQL.Result do
       See `result/3` for more details.
     """
     @spec result(atom, [atom]) :: Macro.t
-    defmacro result(name, types = [type|_]) do
+    defmacro result(name, types = [type]) do
         quote do
             result(unquote(name), unquote(types), fn _, _ -> unquote(type) end)
         end
@@ -43,6 +43,13 @@ defmodule Donut.GraphQL.Result do
     defmacro result(name, []) do
         quote do
             result(unquote(name), [], nil)
+        end
+    end
+    defmacro result(name, types) do
+        quote do
+            result(unquote(name), unquote(types), fn value, env ->
+                Donut.GraphQL.Result.type_resolver(value, env, unquote(types))
+            end)
         end
     end
 
@@ -66,6 +73,22 @@ defmodule Donut.GraphQL.Result do
                 resolve_type &Donut.GraphQL.Result.get_type(&1, &2, unquote(resolver))
             end
         end
+    end
+
+    @doc false
+    @spec type_resolver(any, Absinthe.Resolution.t, [atom]) :: atom | nil
+    def type_resolver(value, env, types) do
+        Enum.find_value(types, fn type ->
+            case Absinthe.Schema.lookup_type(Donut.GraphQL, type) do
+                %{ is_type_of: resolves } when is_function(resolves) ->
+                    if resolves.(value) do
+                        type
+                    else
+                        false
+                    end
+                t -> false
+            end
+        end)
     end
 
     @doc false
