@@ -9,7 +9,6 @@ defmodule Donut.GraphQL.Result.InternalError do
       * `:error_message` - The full error message that would have been displayed
       normally.
     """
-    use Donut.GraphQL.Schema.Notation
 
     @type t :: %Donut.GraphQL.Result.InternalError{
         message: String.t,
@@ -23,25 +22,6 @@ defmodule Donut.GraphQL.Result.InternalError do
         :stacktrace,
         :error_message
     ]
-
-    @desc "An internal server error"
-    object :internal_error do
-        @desc "The presentable error message"
-        field :message, :string
-
-        @desc "The presentable exception module"
-        field :exception, :string
-
-        @desc "The presentable stacktrace from where the exception occurred"
-        field :stacktrace, :string
-
-        interface :generic_error
-
-        is_type_of fn
-            %Donut.GraphQL.Result.InternalError{} -> true
-            _ -> false
-        end
-    end
 
     @doc """
       Create an internal error struct to be returned as an InternalError object
