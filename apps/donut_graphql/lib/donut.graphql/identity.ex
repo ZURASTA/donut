@@ -68,6 +68,8 @@ defmodule Donut.GraphQL.Identity do
                 _, env = %{ context: %{ identity: identity, access_token: token } } -> { :ok, mutable(%{ id: identity, token: token }, env) }
                 _, _ -> { :error, "Missing token" }
             end
+
+            middleware Donut.GraphQL.Middleware.Capture, identity: :id
         end
     end
 end
