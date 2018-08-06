@@ -14,6 +14,11 @@ defmodule Donut.GraphQL.Identity.Contact do
             field :status, non_null(:verification_status), description: "The current verification status of the contact"
             field :presentable, non_null(:string), description: "The presentable information about the contact"
         end
+
+        @desc "Change the priority of the contact"
+        field :set_priority, type: result(:error) do
+            arg :priority, non_null(:contact_priority)
+        end
     end
 
     @desc "An email contact"
@@ -33,6 +38,20 @@ defmodule Donut.GraphQL.Identity.Contact do
         end
 
         interface :mutable_contact
+
+        @desc "Change the priority of the email contact"
+        field :set_priority, type: result(:error) do
+            arg :priority, non_null(:contact_priority)
+
+            resolve fn
+                %{ priority: priority }, %{ priority: priority }, _ -> { :ok, nil }
+                %{ email: email }, %{ priority: priority }, %{ context: %{ identity: identity } } ->
+                    case Sherbet.API.Contact.Email.set_priority(identity, email, priority) do
+                        :ok -> { :ok, nil }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+            end
+        end
     end
 
     @desc "A mobile contact"
@@ -52,6 +71,20 @@ defmodule Donut.GraphQL.Identity.Contact do
         end
 
         interface :mutable_contact
+
+        @desc "Change the priority of the mobile contact"
+        field :set_priority, type: result(:error) do
+            arg :priority, non_null(:contact_priority)
+
+            resolve fn
+                %{ priority: priority }, %{ priority: priority }, _ -> { :ok, nil }
+                %{ mobile: mobile }, %{ priority: priority }, %{ context: %{ identity: identity } } ->
+                    case Sherbet.API.Contact.Mobile.set_priority(identity, mobile, priority) do
+                        :ok -> { :ok, nil }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+            end
+        end
     end
 
     @desc """
