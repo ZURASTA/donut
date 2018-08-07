@@ -19,6 +19,8 @@ defmodule Donut.GraphQL.Identity.Contact do
         field :set_priority, type: result(:error) do
             arg :priority, non_null(:contact_priority)
         end
+
+        field :remove, result(:error), description: "Remove the email contact"
     end
 
     @desc "An email contact"
@@ -52,6 +54,17 @@ defmodule Donut.GraphQL.Identity.Contact do
                     end
             end
         end
+
+        @desc "Remove the email contact"
+        field :remove, type: result(:error) do
+            resolve fn
+                %{ email: email }, _, %{ context: %{ identity: identity } } ->
+                    case Sherbet.API.Contact.Email.remove(identity, email) do
+                        :ok -> { :ok, nil }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+            end
+        end
     end
 
     @desc "A mobile contact"
@@ -80,6 +93,17 @@ defmodule Donut.GraphQL.Identity.Contact do
                 %{ priority: priority }, %{ priority: priority }, _ -> { :ok, nil }
                 %{ mobile: mobile }, %{ priority: priority }, %{ context: %{ identity: identity } } ->
                     case Sherbet.API.Contact.Mobile.set_priority(identity, mobile, priority) do
+                        :ok -> { :ok, nil }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+            end
+        end
+
+        @desc "Remove the mobile contact"
+        field :remove, type: result(:error) do
+            resolve fn
+                %{ mobile: mobile }, _, %{ context: %{ identity: identity } } ->
+                    case Sherbet.API.Contact.Mobile.remove(identity, mobile) do
                         :ok -> { :ok, nil }
                         { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
