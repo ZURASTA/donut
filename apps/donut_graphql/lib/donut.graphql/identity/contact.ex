@@ -210,12 +210,12 @@ defmodule Donut.GraphQL.Identity.Contact do
                 args = %{ email: email }, _ when map_size(args) == 1 ->
                     case Sherbet.API.Contact.Email.request_removal(email) do
                         :ok -> { :ok, nil }
-                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 args = %{ mobile: mobile }, _ when map_size(args) == 1 ->
                     case Sherbet.API.Contact.Mobile.request_removal(mobile) do
                         :ok -> { :ok, nil }
-                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 %{}, _ -> { :error, "Missing contact" }
                 _, _ -> { :error, "Only one contact can be specified" }
@@ -237,12 +237,12 @@ defmodule Donut.GraphQL.Identity.Contact do
                 args = %{ email: email, key: key }, _ when map_size(args) == 2 ->
                     case Sherbet.API.Contact.Email.finalise_removal(email, key) do
                         :ok -> { :ok, nil }
-                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 args = %{ mobile: mobile, key: key }, _ when map_size(args) == 2 ->
                     case Sherbet.API.Contact.Mobile.finalise_removal(mobile, key) do
                         :ok -> { :ok, nil }
-                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 %{ key: _ }, _ -> { :error, "Missing contact" }
                 _, _ -> { :error, "Only one contact can be specified" }
@@ -275,7 +275,7 @@ defmodule Donut.GraphQL.Identity.Contact do
                                     end
                                 { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                             end
-                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 %{ id: identity }, args = %{ mobile: mobile }, env when map_size(args) == 1 ->
                     case Sherbet.API.Contact.Mobile.add(identity, mobile) do
@@ -292,7 +292,7 @@ defmodule Donut.GraphQL.Identity.Contact do
                                     end
                                 { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                             end
-                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 _, %{}, _ -> { :error, "Missing contact" }
                 _, _, _ -> { :error, "Only one contact can be specified" }

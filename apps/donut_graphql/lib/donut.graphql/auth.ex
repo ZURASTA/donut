@@ -53,7 +53,7 @@ defmodule Donut.GraphQL.Auth do
                 args = %{ email_credential: %{ email: email, password: pass } }, _ ->
                     case Gobstopper.API.Auth.Email.register(email, pass) do
                         { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
-                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 %{}, _ -> { :error, "Missing credential" }
                 _, _ -> { :error, "Only one credential can be specified" }
@@ -69,7 +69,7 @@ defmodule Donut.GraphQL.Auth do
                 args = %{ email_credential: %{ email: email, password: pass } }, _ ->
                     case Gobstopper.API.Auth.Email.login(email, pass) do
                         { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
-                        { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                     end
                 %{}, _ -> { :error, "Missing credential" }
                 _, _ -> { :error, "Only one credential can be specified" }
@@ -98,7 +98,7 @@ defmodule Donut.GraphQL.Auth do
             resolve fn %{ session: session = %{ refresh_token: token } }, _ ->
                 case Gobstopper.API.Auth.refresh(token) do
                     { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
-                    { :error, reason } ->  { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
                 end
             end
         end
