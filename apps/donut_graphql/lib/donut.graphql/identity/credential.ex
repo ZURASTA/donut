@@ -19,7 +19,6 @@ defmodule Donut.GraphQL.Identity.Credential do
     """
     result :credential, [:credential]
 
-    @desc "An identity"
     object :credential_queries do
         @desc "The credentials associated with the identity"
         field :credentials, list_of(result(:credential)) do
@@ -77,5 +76,27 @@ defmodule Donut.GraphQL.Identity.Credential do
             { type, { :none, nil } } -> %{ type: type }
             { type, { status, presentable } } -> %{ type: type, status: status, presentable: presentable }
         end)
+    end
+
+    object :credential_mutations do
+        @desc "Add or replace a credential for an identity"
+        field :set_credential, type: result(:credential) do
+            @desc "The email credential to associate with the identity"
+            arg :email_credential, :email_credential
+
+            resolve fn
+                %{ token: token }, %{ email_credential: %{ email: email, password: pass } }, _ ->
+                    case Gobstopper.API.Auth.Email.set(token, email, pass) do
+                        :ok ->
+                            case Gobstopper.API.Auth.Email.get(token) do
+                                { :ok, { status, presentable } } -> { :ok, %{ type: :email, status: status, presentable: presentable } }
+                                { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                            end
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+                _, %{}, _ -> { :error, "Missing credential" }
+                _, _, _ -> { :error, "Only one credential can be specified" }
+            end
+        end
     end
 end

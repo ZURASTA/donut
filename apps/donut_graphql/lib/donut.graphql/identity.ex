@@ -19,6 +19,7 @@ defmodule Donut.GraphQL.Identity do
             import_fields mutable(:contact_queries)
         end
 
+        import_fields :credential_mutations
         import_fields :contact_identity_mutations
     end
 
