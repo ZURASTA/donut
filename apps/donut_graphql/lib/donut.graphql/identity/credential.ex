@@ -7,10 +7,12 @@ defmodule Donut.GraphQL.Identity.Credential do
     end
 
     @desc "The state of a given authentication credential"
-    object :credential do
-        field :type, non_null(:credential_type), description: "The type of credential"
-        field :status, :verification_status, description: "The current verification status of the credential"
-        field :presentable, :string, description: "The presentable information about the credential"
+    mutable_object :credential do
+        immutable do
+            field :type, non_null(:credential_type), description: "The type of credential"
+            field :status, :verification_status, description: "The current verification status of the credential"
+            field :presentable, :string, description: "The presentable information about the credential"
+        end
     end
 
     @desc """
@@ -19,27 +21,36 @@ defmodule Donut.GraphQL.Identity.Credential do
     """
     result :credential, [:credential]
 
-    object :credential_queries do
-        @desc "The credentials associated with the identity"
-        field :credentials, list_of(result(:credential)) do
-            @desc "The type of credential to retrieve"
-            arg :type, :credential_type
+    @desc """
+    The collection of possible results from a credential mutate request. If
+    successful returns the `MutableCredential` trying to be modified, otherwise
+    returns an error.
+    """
+    result :mutable_credential, [:mutable_credential]
 
-            @desc "The status of the credentials to retrieve"
-            arg :status, :verification_status
+    mutable_object :credential_queries do
+        immutable do
+            @desc "The credentials associated with the identity"
+            field :credentials, list_of(result(mutable(:credential))) do
+                @desc "The type of credential to retrieve"
+                arg :type, :credential_type
 
-            @desc """
-            Whether to retrieve credentials that have been associated with the
-            identity, or ones which have not.
-            """
-            arg :associated, :boolean
+                @desc "The status of the credentials to retrieve"
+                arg :status, :verification_status
 
-            resolve fn
-                %{ token: token }, args, _ ->
-                    case Gobstopper.API.Auth.all_credentials(token) do
-                        { :ok, credentials } -> { :ok, filter_credentials(credentials, args) }
-                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
-                    end
+                @desc """
+                Whether to retrieve credentials that have been associated with the
+                identity, or ones which have not.
+                """
+                arg :associated, :boolean
+
+                resolve fn
+                    %{ token: token }, args, _ ->
+                        case Gobstopper.API.Auth.all_credentials(token) do
+                            { :ok, credentials } -> { :ok, filter_credentials(credentials, args) }
+                            { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                        end
+                end
             end
         end
     end
@@ -80,7 +91,7 @@ defmodule Donut.GraphQL.Identity.Credential do
 
     object :credential_mutations do
         @desc "Add or replace a credential for an identity"
-        field :set_credential, type: result(:credential) do
+        field :set_credential, type: result(:mutable_credential) do
             @desc "The email credential to associate with the identity"
             arg :email_credential, :email_credential
 

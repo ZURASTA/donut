@@ -15,7 +15,7 @@ defmodule Donut.GraphQL.Identity do
             field :id, non_null(:id), description: "The unique ID of the identity"
             field :token, non_null(:string), description: "The access token that granted access to this identity"
 
-            import_fields :credential_queries
+            import_fields mutable(:credential_queries)
             import_fields mutable(:contact_queries)
         end
 
