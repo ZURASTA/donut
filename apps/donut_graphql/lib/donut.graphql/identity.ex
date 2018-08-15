@@ -45,7 +45,7 @@ defmodule Donut.GraphQL.Identity do
                 _, _ -> { :error, "Missing token" }
             end
 
-            middleware Donut.GraphQL.Middleware.Capture, identity: :id
+            middleware Donut.GraphQL.Middleware.Capture, identity: :id, token: :token
         end
     end
 
@@ -72,7 +72,7 @@ defmodule Donut.GraphQL.Identity do
                 _, _ -> { :error, "Missing token" }
             end
 
-            middleware Donut.GraphQL.Middleware.Capture, identity: :id
+            middleware Donut.GraphQL.Middleware.Capture, identity: :id, token: :token
         end
     end
 end
