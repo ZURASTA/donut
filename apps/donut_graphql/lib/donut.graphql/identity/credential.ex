@@ -13,6 +13,17 @@ defmodule Donut.GraphQL.Identity.Credential do
             field :status, :verification_status, description: "The current verification status of the credential"
             field :presentable, :string, description: "The presentable information about the credential"
         end
+
+        @desc "Remove the credential"
+        field :remove, type: result(:error) do
+            resolve fn
+                %{ type: :email }, _, %{ context: %{ token: token } } ->
+                    case Gobstopper.API.Auth.Email.remove(token) do
+                        :ok -> { :ok, nil }
+                        { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
+                    end
+            end
+        end
     end
 
     @desc """
