@@ -50,7 +50,7 @@ defmodule Donut.GraphQL.Auth do
             arg :email_credential, :email_credential
 
             resolve fn
-                args = %{ email_credential: %{ email: email, password: pass } }, _ ->
+                %{ email_credential: %{ email: email, password: pass } }, _ ->
                     case Gobstopper.API.Auth.Email.register(email, pass) do
                         { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
                         { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
@@ -66,7 +66,7 @@ defmodule Donut.GraphQL.Auth do
             arg :email_credential, :email_credential
 
             resolve fn
-                args = %{ email_credential: %{ email: email, password: pass } }, _ ->
+                %{ email_credential: %{ email: email, password: pass } }, _ ->
                     case Gobstopper.API.Auth.Email.login(email, pass) do
                         { :ok, token } -> { :ok, %{ access_token: token, refresh_token: token } }
                         { :error, reason } -> { :ok, %Donut.GraphQL.Result.Error{ message: reason } }
