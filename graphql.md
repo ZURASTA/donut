@@ -43,6 +43,30 @@ Store the bearer access token for a given identity. Should take the form of `Bea
 Indicate the current locale(s) to be used. e.g. `en-AU`.
 
 
+## Mutability
+Mutation queries may return mutable variants of the same types returned in regular queries. These mutable variants will expose the same fields as their immutable equivalent, but may also expose additional fields to mutate that individual object.
+
+Example below will remove every credential associated with the identity.
+
+```graphql
+mutation {
+  identity {
+    ... on MutableIdentity {
+      credentials(associated: true) {
+        ... on MutableCredential {
+          remove {
+            ... on Error {
+                message
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+
 ## Authentication
 
 ### Registration
