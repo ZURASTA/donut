@@ -77,9 +77,9 @@ defmodule Donut.GraphQL.Result do
 
     @doc false
     @spec type_resolver(any, Absinthe.Resolution.t, [atom]) :: atom | nil
-    def type_resolver(value, _, types) do
+    def type_resolver(value, %{ schema: schema }, types) do
         Enum.find_value(types, fn type ->
-            case Absinthe.Schema.lookup_type(Donut.GraphQL, type) do
+            case Absinthe.Schema.lookup_type(schema, type) do
                 %{ is_type_of: resolves } when is_function(resolves) ->
                     if resolves.(value) do
                         type
