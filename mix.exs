@@ -14,6 +14,7 @@ defmodule Donut.Mixfile do
                 main: "donut",
                 extras: [
                     "README.md": [filename: "donut", title: "Donut"],
+                    "overview.md": [filename: "overview", title: "Overview"],
                     "graphql.md": [filename: "graphql", title: "GraphQL"]
                 ]
             ]
